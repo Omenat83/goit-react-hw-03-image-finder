@@ -1,6 +1,8 @@
 import { Component } from 'react';
+import PropTypes from 'prop-types';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { BiSearchAlt2 } from 'react-icons/bi';
 import { Header, Form, Button, Span, Input } from './Searchbar.styled';
 
 export class Searchbar extends Component {
@@ -29,6 +31,7 @@ export class Searchbar extends Component {
       <Header>
         <Form onSubmit={this.handleSubmit}>
           <Button type="submit">
+            <BiSearchAlt2 size="25px" />
             <Span>Search</Span>
           </Button>
 
@@ -46,3 +49,7 @@ export class Searchbar extends Component {
     );
   }
 }
+
+Searchbar.propTypes = {
+  onSubmit: PropTypes.func.isRequired,
+};

@@ -1,9 +1,11 @@
 import { Component } from 'react';
+import PropTypes from 'prop-types';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { ImageGalleryItem } from 'components/ImageGalleryItem/ImageGalleryItem';
 import { LoadMoreBtn } from 'components/Button/Button';
 import { Loader } from 'components/Loader/Loader';
+import { Modal } from 'components/Modal/Modal';
 import { GalUl } from './ImageGallery.styled';
 
 const API_URL = 'https://pixabay.com/api/';
@@ -14,12 +16,14 @@ export class ImageGallery extends Component {
     currentPage: 1,
     pictures: [],
     status: 'idle',
-    error: '',
+    showModal: false,
+    largeImgURL: '',
   };
 
   componentDidUpdate(prevProps, prevState) {
     const { pictureFindName } = this.props;
     const { currentPage } = this.state;
+
     // якщо змінилось слово для пошуку картинок
     if (prevProps.pictureFindName !== pictureFindName) {
       this.setState({ currentPage: 1, pictures: [], status: 'pending' });
@@ -36,6 +40,7 @@ export class ImageGallery extends Component {
         })
         .catch(error => toast.error('Sorry, something wrong. Try again later'));
     }
+
     // якщо змінився номер сторінки (Load more)
     if (prevState.currentPage !== currentPage && currentPage !== 1) {
       this.setState({ status: 'pending' });
@@ -50,7 +55,6 @@ export class ImageGallery extends Component {
               `Sorry, picture including ${pictureFindName} ended :(`
             );
           }
-
           this.setState(prevState => ({
             pictures: [...prevState.pictures, ...data.hits],
             status: 'resolved',
@@ -59,25 +63,46 @@ export class ImageGallery extends Component {
         .catch(error => toast.error('Sorry, something wrong. Try again later'));
     }
   }
+
   // збільшуємо номер сторінки
   onLoadMore = () => {
     this.setState(prevState => ({ currentPage: prevState.currentPage + 1 }));
   };
 
-  render() {
-    const { pictures, status, currentPage } = this.state;
+  // обробка кліку по картинці, по id
+  onImgClick = e => {
+    const imgId = e.target.id;
+    const { pictures } = this.state;
+    const index = pictures.findIndex(
+      picture => Number(picture.id) === Number(imgId)
+    );
+    const bigImgSize = pictures[index].largeImageURL;
+    this.setState({ largeImgURL: bigImgSize, showModal: true });
+  };
 
+  // зміна стану модального вікна
+  toggleModal = () => {
+    this.setState(state => ({ showModal: !state.showModal }));
+  };
+
+  render() {
+    const { pictures, status, currentPage, showModal, largeImgURL } =
+      this.state;
     return (
       <>
         {status === 'pending' && currentPage === 1 && <Loader />}
+        {showModal && (
+          <Modal largeImageURL={largeImgURL} onClose={this.toggleModal} />
+        )}
         {pictures.length > 0 && (
           <>
-            <GalUl>
+            <GalUl onClick={e => this.onImgClick(e)}>
               {pictures.map(picture => {
                 return (
                   <ImageGalleryItem
                     key={picture.id}
                     webformatURL={picture.webformatURL}
+                    id={picture.id}
                   />
                 );
               })}
@@ -90,3 +115,7 @@ export class ImageGallery extends Component {
     );
   }
 }
+
+ImageGallery.propTypes = {
+  pictureFindName: PropTypes.string.isRequired,
+};
